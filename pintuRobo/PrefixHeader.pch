@@ -1,0 +1,29 @@
+//
+//  PrefixHeader.pch
+//  pintuRobo
+//
+//  Created by 李炜 on 14/12/28.
+//  Copyright (c) 2014年 李炜. All rights reserved.
+//
+
+#ifndef pintuRobo_PrefixHeader_pch
+#define pintuRobo_PrefixHeader_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+
+#import "TMAPIClient.h"
+#import "CoreData+MagicalRecord.h"
+#import "lwLog.h"
+#import "nv-ios-digest/SHA1.h"
+#import "NSData+Base64.h"
+#import "SldAsyncImageView.h"
+#import "UIAlertView+Blocks.h"
+#endif
+
+
+#endif
