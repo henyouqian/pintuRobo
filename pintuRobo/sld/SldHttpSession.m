@@ -30,7 +30,7 @@
         _serverUrl = [NSURL URLWithString:host];
         
         NSURLSessionConfiguration *conf = [NSURLSessionConfiguration defaultSessionConfiguration];
-        conf.timeoutIntervalForRequest = 100;
+        conf.timeoutIntervalForRequest = 300;
         self.session = [NSURLSession sessionWithConfiguration:conf delegate:self delegateQueue: [NSOperationQueue mainQueue]];
     }
     
@@ -80,17 +80,20 @@
     NSMutableURLRequest * request = [NSMutableURLRequest requestWithURL:url];
     [request setHTTPMethod:@"POST"];
     
+    NSMutableDictionary *bodyWithSecret = [NSMutableDictionary dictionary];
+    
     if (body) {
-        NSMutableDictionary *bodyWithSecret = [NSMutableDictionary dictionaryWithDictionary:body];
-        bodyWithSecret[@"Secret"] = [RoboConf inst].SERVER_SECRET;
-        NSError *error;
-        NSData *bodyData = [NSJSONSerialization dataWithJSONObject:bodyWithSecret options:0 error:&error];
-        if (error) {
-            lwError("json encode error: %@", error);
-            return;
-        }
-        [request setHTTPBody:bodyData];
+        bodyWithSecret = [NSMutableDictionary dictionaryWithDictionary:body];
     }
+    
+    bodyWithSecret[@"Secret"] = [RoboConf inst].SERVER_SECRET;
+    NSError *error;
+    NSData *bodyData = [NSJSONSerialization dataWithJSONObject:bodyWithSecret options:0 error:&error];
+    if (error) {
+        lwError("json encode error: %@", error);
+        return;
+    }
+    [request setHTTPBody:bodyData];
     
     NSURLSessionDataTask *task = [self.session dataTaskWithRequest:request
                                                  completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {

@@ -23,6 +23,7 @@
 #import "NSData+Base64.h"
 #import "SldAsyncImageView.h"
 #import "UIAlertView+Blocks.h"
+#import "QiniuSDK.h"
 #endif
 
 

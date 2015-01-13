@@ -11,6 +11,8 @@
 @property NSString *SERVER_HOST;
 @property NSString *SERVER_SECRET;
 @property NSString *IMAGE_DOWNLOAD_HOST;
+@property NSString *UPLOAD_HOST;
+@property NSString *PRIVATE_UPLOAD_HOST;
 
 +(instancetype)inst;
 

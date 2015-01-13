@@ -73,6 +73,7 @@ static RoboData* _inst;
 
 - (instancetype)initWithDict:(NSDictionary*)dict {
     if (self = [super init]) {
+        self.Key = dict[@"Key"];
         self.Sizes = [NSMutableArray array];
         self.PostId = [(NSNumber*)dict[@"PostId"] longLongValue];
         NSArray *sizes = dict[@"Sizes"];

@@ -9,6 +9,7 @@
 #import "ImageBrowserController.h"
 #import "RoboData.h"
 #import "lwUtil.h"
+#import "SldHttpSession.h"
 
 @interface ImageBrowserController ()
 @property (weak, nonatomic) IBOutlet SldAsyncImageView *imageView;
@@ -25,34 +26,33 @@
         TumblrImageSize *size = _image.Sizes[0];
         imageUrl = size.Url;
     }
-    NSString *localPath = [lwUtil makeImagePath:imageUrl];
+    NSString *localPath = [lwUtil makeImagePathWithUrl:imageUrl];
     [_imageView asyncLoadImageWithUrl:imageUrl localPath:localPath showIndicator:YES completion:^{
         
     }];
     
     [self updateTitle];
     
-    UISwipeGestureRecognizer *recognizer;
-    recognizer = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipeFrom:)];
-    [recognizer setDirection:UISwipeGestureRecognizerDirectionLeft|UISwipeGestureRecognizerDirectionRight];
-    [self.view addGestureRecognizer:recognizer];
+    UISwipeGestureRecognizer *recognizerLeft;
+    recognizerLeft = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipeLeftFrom:)];
+    [recognizerLeft setDirection:UISwipeGestureRecognizerDirectionLeft];
+    [self.view addGestureRecognizer:recognizerLeft];
+    
+    UISwipeGestureRecognizer *recognizerRight;
+    recognizerRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipeRightFrom:)];
+    [recognizerRight setDirection:UISwipeGestureRecognizerDirectionRight];
+    [self.view addGestureRecognizer:recognizerRight];
 }
 
-- (void)handleSwipeFrom:(UISwipeGestureRecognizer *)gestureRecognizer {
-    int index = [_images indexOfObject:_image];
+- (void)handleSwipeRightFrom:(UISwipeGestureRecognizer *)gestureRecognizer {
+    NSUInteger index = [_images indexOfObject:_image];
     if (NSNotFound == index) {
         return;
     }
-    if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionLeft) {
-        index--;
-        if (index < 0) {
-            index = _images.count - 1;
-        }
+    if (index == 0) {
+        index = _images.count - 1;
     } else {
-        index++;
-        if (index >= _images.count) {
-            index = 0;
-        }
+        index--;
     }
     
     _image = _images[index];
@@ -62,14 +62,60 @@
         TumblrImageSize *size = _image.Sizes[0];
         imageUrl = size.Url;
     }
-    NSString *localPath = [lwUtil makeImagePath:imageUrl];
+    NSString *localPath = [lwUtil makeImagePathWithUrl:imageUrl];
+    [_imageView asyncLoadImageWithUrl:imageUrl localPath:localPath showIndicator:YES completion:nil];
+    
+    [self updateTitle];
+}
+
+- (void)handleSwipeLeftFrom:(UISwipeGestureRecognizer *)gestureRecognizer {
+    NSUInteger index = [_images indexOfObject:_image];
+    if (NSNotFound == index) {
+        return;
+    }
+    index++;
+    if (index >= _images.count) {
+        index = 0;
+    }
+    
+    _image = _images[index];
+    
+    NSString *imageUrl = _image.imageUrl;
+    if (imageUrl == nil) {
+        TumblrImageSize *size = _image.Sizes[0];
+        imageUrl = size.Url;
+    }
+    NSString *localPath = [lwUtil makeImagePathWithUrl:imageUrl];
     [_imageView asyncLoadImageWithUrl:imageUrl localPath:localPath showIndicator:YES completion:nil];
     
     [self updateTitle];
 }
 
 - (IBAction)onDeleteButton:(id)sender {
-    
+    [[[UIAlertView alloc] initWithTitle:@"删除这张图片吗?"
+                                message:nil
+                       cancelButtonItem:[RIButtonItem itemWithLabel:@"取消" action:nil]
+                       otherButtonItems:[RIButtonItem itemWithLabel:@"删除！" action:^{
+        SldHttpSession *session = [SldHttpSession defaultSession];
+        NSDictionary *body = @{
+                               @"BlogName": [RoboData inst].blog.Name,
+                               @"Key":_image.Key,
+                               };
+        [session postToApi:@"tumblr/delImage" body:body completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            if (error) {
+                [lwUtil alertHTTPError:error data:data];
+                return;
+            }
+            
+            [_images removeObject:_image];
+            
+            [RoboData inst].hasImageDeleted = YES;
+            
+            [lwUtil alertWithTitle:@"删除成功" text:nil buttonTitle:@"OK" action:^{
+                [self.navigationController popViewControllerAnimated:YES];
+            }];
+        }];
+    }], nil] show];
 }
 
 - (void)updateTitle {

@@ -13,6 +13,7 @@
 + (instancetype)inst;
 
 @property TumblrBlog *blog;
+@property BOOL hasImageDeleted;
 
 @end
 
@@ -47,6 +48,7 @@
 #pragma mark - TumblrImage
 @interface TumblrImage : NSObject
 
+@property NSString *Key;
 @property SInt64 PostId;
 @property NSMutableArray *Sizes;
 

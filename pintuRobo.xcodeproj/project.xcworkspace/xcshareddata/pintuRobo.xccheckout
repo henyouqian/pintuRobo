@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>EC9F76E1-D6C1-4970-93E9-79DE54940D59</string>
+	<key>IDESourceControlProjectName</key>
+	<string>pintuRobo</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>FB62008E3E6974F73EFF783A2A3C23DF6F7531B6</key>
+		<string>https://github.com/henyouqian/pintuRobo.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>pintuRobo.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>FB62008E3E6974F73EFF783A2A3C23DF6F7531B6</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/henyouqian/pintuRobo.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>FB62008E3E6974F73EFF783A2A3C23DF6F7531B6</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>FB62008E3E6974F73EFF783A2A3C23DF6F7531B6</string>
+			<key>IDESourceControlWCCName</key>
+			<string>pintuRobo</string>
+		</dict>
+	</array>
+</dict>
+</plist>

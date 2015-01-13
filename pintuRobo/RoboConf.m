@@ -26,6 +26,9 @@ static RoboConf* _inst = nil;
 //        _SERVER_HOST = @"http://sld.pintugame.com";
         _SERVER_SECRET = @"isjdifj242i0o;a;lidf";
         _IMAGE_DOWNLOAD_HOST = @"http://sld.pintugame.com";
+        _UPLOAD_HOST = @"http://dn-pintuuserupload.qbox.me";
+        _PRIVATE_UPLOAD_HOST = @"http://7tebsf.com1.z0.glb.clouddn.com";
+        
     }
     return self;
 }

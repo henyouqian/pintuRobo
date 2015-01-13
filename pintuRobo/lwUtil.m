@@ -22,6 +22,16 @@
     return output;
 }
 
++ (NSString*)sha1WithData:(NSData*)data {
+    SHA1 *md = [[SHA1 alloc] init];
+    
+    [md updateWith:data.bytes length:(CC_LONG)data.length];
+    [md final];
+    
+    NSData *nsd = [NSData dataWithBytes:md.buffer length:md.bufferSize];
+    return [nsd urlBase64EncodedString];
+}
+
 + (UIAlertView*)alertWithTitle:(NSString*)title text:(NSString*)text buttonTitle:(NSString*)buttonTitle action:(void (^)(void))action {
     RIButtonItem *buttonItem = nil;
     if (buttonTitle && buttonTitle.length > 0) {
@@ -58,7 +68,7 @@
     }
 }
 
-+ (NSString*)makeImagePath:(NSString*)url {
++ (NSString*)makeImagePathWithUrl:(NSString*)url {
     static dispatch_once_t onceToken;
     NSString *imgFolder = @"img";
     dispatch_once(&onceToken, ^{
@@ -98,6 +108,25 @@
     });
     
     return [lwUtil makeDocPath:[NSString stringWithFormat:@"%@/%@", imgFolder, key]];
+}
+
++ (BOOL)isGifUrl:(NSString*)url {
+    NSString *lurl = [url lowercaseString];
+    NSRange range = [lurl rangeOfString:@".gif"];
+    return range.location != NSNotFound;
+}
+
++ (NSString*)makeTempPath:(NSString*)fileName {
+    NSString *filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:fileName];
+    return filePath;
+}
+
++ (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize {
+    UIGraphicsBeginImageContextWithOptions(newSize, NO, 1.0);
+    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return newImage;
 }
 
 @end

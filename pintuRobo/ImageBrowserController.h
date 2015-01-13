@@ -12,5 +12,5 @@
 
 @interface ImageBrowserController : UIViewController
 @property TumblrImage *image;
-@property NSArray *images;
+@property NSMutableArray *images;
 @end

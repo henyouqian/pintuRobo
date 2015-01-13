@@ -34,6 +34,7 @@
 //==========================
 @interface SldAsyncImageView()
 @property (atomic) lwAsyncTask *at;
+@property (atomic) UIActivityIndicatorView *indicatorView;
 @end
 
 @implementation SldAsyncImageView
@@ -169,24 +170,24 @@
     self.image = nil;
     self.animationImages = nil;
     
-    UIActivityIndicatorView *indicatorView = nil;
-    if (showIndicator) {
-        indicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-        indicatorView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin
+    if (showIndicator && _indicatorView == nil) {
+        _indicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+        _indicatorView.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin
         | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
         
-        [indicatorView sizeToFit];
-        [indicatorView startAnimating];
-        indicatorView.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
+        [_indicatorView sizeToFit];
+        [_indicatorView startAnimating];
+        _indicatorView.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
         
-        [self addSubview:indicatorView];
+        [self addSubview:_indicatorView];
     }
     
     //local
     if ([[NSFileManager defaultManager] fileExistsAtPath:localPath]) {
         [self asyncLoadLocalImageWithPath:localPath anim:YES thumbSize:0 completion:^{
-            if (indicatorView) {
-                [indicatorView removeFromSuperview];
+            if (_indicatorView) {
+                [_indicatorView removeFromSuperview];
+                _indicatorView = nil;
             }
             if (completion) {
                 completion();
@@ -205,8 +206,9 @@
                           toPath:localPath
                         withData:nil completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error, id data)
          {
-             if (indicatorView) {
-                 [indicatorView removeFromSuperview];
+             if (_indicatorView) {
+                 [_indicatorView removeFromSuperview];
+                 _indicatorView = nil;
              }
              
              _task = nil;

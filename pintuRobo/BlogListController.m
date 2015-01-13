@@ -129,6 +129,110 @@ static BlogListController *_blogListController = nil;
 - (void)addBlogWithDict:(NSDictionary*)dict {
     TumblrBlog *blog = [[TumblrBlog alloc] initWithRawDict:dict];
     
+    //getAvatar
+    UIAlertView *alert = [lwUtil alertWithTitle:@"获取avartar" text:nil  buttonTitle:nil action:nil];
+    __block NSData *avatar64Data = nil;
+    __block NSData *avatar128Data = nil;
+    [[TMAPIClient sharedInstance] avatar:blog.Name
+                                    size:64
+                                callback:^ (id result, NSError *error) {
+                                    if (error) {
+                                        [alert dismissWithClickedButtonIndex:0 animated:NO];
+                                        [lwUtil alertWithTitle:@"获取avartar错误" text:nil buttonTitle:@"OK" action:nil];
+                                        return;
+                                    }
+                                    avatar64Data = result;
+                                    if (avatar64Data && avatar128Data) {
+                                        [alert dismissWithClickedButtonIndex:0 animated:NO];
+                                        [self sendAvatarWith64:avatar64Data and128:avatar128Data blog:blog];
+                                    }
+                                }];
+    [[TMAPIClient sharedInstance] avatar:blog.Name
+                                    size:128
+                                callback:^ (id result, NSError *error) {
+                                    if (error) {
+                                        [alert dismissWithClickedButtonIndex:0 animated:NO];
+                                        [lwUtil alertWithTitle:@"获取avartar错误" text:nil buttonTitle:@"OK" action:nil];
+                                        return;
+                                    }
+                                    avatar128Data = result;
+                                    if (avatar64Data && avatar128Data) {
+                                        [alert dismissWithClickedButtonIndex:0 animated:NO];
+                                        [self sendAvatarWith64:avatar64Data and128:avatar128Data blog:blog];
+                                    }
+                                }];
+    
+    return;
+}
+
+- (void)sendAvatarWith64:(NSData*)data64 and128:(NSData*)data128 blog:(TumblrBlog*)blog {
+    __block UIAlertView *alert = [lwUtil alertWithTitle:@"上传avartar" text:nil  buttonTitle:nil action:nil];
+    
+    NSString *key = [lwUtil sha1WithData:data64];
+    key = [NSString stringWithFormat:@"%@.jpg", key];
+    blog.Avartar64 = key;
+    
+    key = [lwUtil sha1WithData:data128];
+    key = [NSString stringWithFormat:@"%@.jpg", key];
+    blog.Avartar128 = key;
+    
+    //upload token
+    SldHttpSession *session = [SldHttpSession defaultSession];
+    [session postToApi:@"tumblr/getUptoken" body:nil completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (error) {
+            [lwUtil alertHTTPError:error data:data];
+            [alert dismissWithClickedButtonIndex:0 animated:YES];
+            alert = nil;
+            return;
+        }
+        
+        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+        if (error) {
+            lwError("Json error:%@", [error localizedDescription]);
+            [alert dismissWithClickedButtonIndex:0 animated:YES];
+            alert = nil;
+            return;
+        }
+        
+        NSString *token = [dict objectForKey:@"Token"];
+        __block QNUploadManager *upManager = [[QNUploadManager alloc] init];
+        __block int finishNum = 0;
+        for (int i = 0; i < 2; ++i) {
+            NSString *key = nil;
+            NSData *data = nil;
+            if (i == 0) {
+                key = blog.Avartar64;
+                data = data64;
+            } else if (i == 1) {
+                key = blog.Avartar128;
+                data = data128;
+            }
+            
+            [upManager putData:data
+                           key:key
+                         token:token
+                      complete:^(QNResponseInfo *info, NSString *key, NSDictionary *resp) {
+                          if (info.ok) {
+                              finishNum++;
+                              if (finishNum == 2) {
+                                  [alert dismissWithClickedButtonIndex:0 animated:NO];
+                                  alert = nil;
+                                  [self sendMatch:blog];
+                              } else {
+                                  alert.title = @"完成1个";
+                              }
+                          } else {
+                              [alert dismissWithClickedButtonIndex:0 animated:NO];
+                              alert = nil;
+                              [lwUtil alertWithTitle:@"上传失败" text:nil buttonTitle:@"OK" action:nil];
+                          }
+                      }
+                        option:nil];
+        }
+    }];
+}
+
+- (void) sendMatch :(TumblrBlog*)blog {
     SldHttpSession *session = [SldHttpSession defaultSession];
     NSDictionary *body = @{
                            @"Name":blog.Name,
@@ -144,7 +248,15 @@ static BlogListController *_blogListController = nil;
             return;
         }
         
-        [_blogs insertObject:blog atIndex:0];
+        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+        if (error) {
+            lwError("Json error:%@", [error localizedDescription]);
+            return;
+        }
+        NSDictionary *blogDict = [dict objectForKey:@"Blog"];
+        TumblrBlog *respBlog = [[TumblrBlog alloc] initWithDict:blogDict];
+        
+        [_blogs insertObject:respBlog atIndex:0];
         [self.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationAutomatic];
         [self.navigationController popViewControllerAnimated:YES];
     }];

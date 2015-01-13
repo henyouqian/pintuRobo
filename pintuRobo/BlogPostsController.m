@@ -24,6 +24,7 @@
 @interface BlogPostHeader : UICollectionReusableView
 @property (weak, nonatomic) IBOutlet UITextView *outputView;
 @property (weak, nonatomic) IBOutlet UIButton *syncButton;
+@property (weak, nonatomic) IBOutlet UISwitch *portraitSwitch;
 
 @end
 
@@ -43,6 +44,7 @@
 @property NSString *lastKey;
 @property SInt64 lastScore;
 @property TumblrBlog *blog;
+@property BOOL isPortrait;
 
 @end
 
@@ -142,6 +144,13 @@
     
 }
 
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    if ([RoboData inst].hasImageDeleted) {
+        [self.collectionView reloadData];
+    }
+}
+
 
 - (IBAction)onSyncButton:(id)sender {
     _buttonSyncing = !_buttonSyncing;
@@ -190,9 +199,11 @@
          for (NSDictionary *postDict in posts) {
              NSNumber *postId = [postDict objectForKey:@"id"];
              NSArray *photos = [postDict objectForKey:@"photos"];
+             int i = 0;
              for (NSDictionary *photoDict in photos) {
                  NSMutableDictionary *image = [NSMutableDictionary dictionary];
                  image[@"PostId"] = postId;
+                 image[@"IndexInPost"] = @(i);
                  NSArray *altsizes = photoDict[@"alt_sizes"];
                  NSMutableArray *sizes = [NSMutableArray array];
                  for (NSDictionary *sizeDict in altsizes) {
@@ -204,6 +215,7 @@
                  }
                  image[@"Sizes"] = sizes;
                  [images addObject:image];
+                 i++;
              }
          }
          body[@"Images"] = images;
@@ -229,16 +241,57 @@
      }];
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
 
 - (BOOL)prefersStatusBarHidden {
     return NO;
 }
 
+- (IBAction)onRefreshButton:(id)sender {
+    _isPortrait = _header.portraitSwitch.on;
+    
+    
+    SldHttpSession *session = [SldHttpSession defaultSession];
+    int limit = 30;
+    NSDictionary *body = @{
+                           @"BlogName":_blog.Name,
+                           @"LastKey":@"",
+                           @"LastScore":@(0),
+                           @"Limit":@(limit),
+                           @"IsPortrait":@(_isPortrait),
+                           };
+    [session postToApi:@"tumblr/listImage" body:body completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (error) {
+            [lwUtil alertHTTPError:error data:data];
+            return;
+        }
+        
+        [_images removeAllObjects];
+        
+        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+        if (error) {
+            lwError("Json error:%@", [error localizedDescription]);
+            return;
+        }
+        
+        _lastKey = dict[@"LastKey"];
+        _lastScore = [(NSNumber*)dict[@"LastScore"] longLongValue];
+        NSArray *images = dict[@"Images"];
+        for (NSDictionary *imageDict in images) {
+            TumblrImage *image = [[TumblrImage alloc] initWithDict:imageDict];
+            [_images addObject:image];
+        }
+        [self.collectionView reloadData];
+    }];
+    
+    
+}
+
 - (IBAction)onMoreButton:(id)sender {
+    if (_isPortrait != _header.portraitSwitch.on) {
+        [self onRefreshButton:nil];
+        return;
+    }
+    
     UIButton *button = sender;
     [button setTitle:@"加载中..." forState:UIControlStateDisabled];
     button.enabled = NO;
@@ -250,6 +303,7 @@
                            @"LastKey":_lastKey,
                            @"LastScore":@(_lastScore),
                            @"Limit":@(limit),
+                           @"IsPortrait":@(_isPortrait),
                            };
     [session postToApi:@"tumblr/listImage" body:body completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
         [button setTitle:@"更多" forState:UIControlStateDisabled];
